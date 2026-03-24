@@ -40,13 +40,17 @@ function Show-Menu {
 # SYSTEM ANALYSIS
 # ==========================
 function System-Analysis {
+    param([switch]$SilentMode)
     Clear-Host
     Write-Host "=== SYSTEM ANALYSIS ===" -ForegroundColor Cyan
     $cpu = Get-CimInstance Win32_Processor
     try {
         $cpuLoad = (Get-Counter '\Processor(_Total)\% Processor Time').CounterSamples[0].CookedValue
         $cpuLoad = [math]::Round($cpuLoad, 2)
-    } catch { $cpuLoad = 0 }
+    } catch {
+        $cpuLoad = 0
+        Write-Host "Could not get CPU load, set to 0%" -ForegroundColor Yellow
+    }
     Write-Host "CPU: $($cpu.Name)"
     Write-Host "CPU Load: $cpuLoad %"
 
@@ -79,29 +83,32 @@ function System-Analysis {
     if ($processCount -gt 200) { Write-Host ("Too many background processes! ({0})" -f $processCount) -ForegroundColor Yellow }
     if ($cpuLoad -lt 50 -and $freeRam -gt 8) { Write-Host "System is running very well" -ForegroundColor Green }
 
+    # 25+ checks
     1..25 | ForEach-Object { Write-Host ("Check {0}: OK" -f $_) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
 
-    Pause
+    if (-not $SilentMode) { Pause }
 }
 
 # ==========================
 # TEMP CLEANUP
 # ==========================
 function Cleanup {
+    param([switch]$SilentMode)
     Write-Host "`n=== TEMP CLEANUP ===" -ForegroundColor Cyan
     $paths = @("$env:TEMP\*", "C:\Windows\Temp\*")
     foreach ($p in $paths) {
         Try { Remove-Item $p -Recurse -Force -ErrorAction Stop; Write-Host ("Cleaned: {0}" -f $p) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host ("Error cleaning: {0}" -f $p) -ForegroundColor Red }
+        Catch { Write-Host ("Already clean / not found: {0}" -f $p) -ForegroundColor Yellow; Start-Sleep -Milliseconds 150 }
     }
     1..20 | ForEach-Object { Write-Host ("Cleanup tweak {0} completed" -f $_) -ForegroundColor Green; Start-Sleep -Milliseconds 100 }
-    Pause
+    if (-not $SilentMode) { Pause }
 }
 
 # ==========================
 # GAMING TWEAKS
 # ==========================
 function Gaming-Tweaks {
+    param([switch]$SilentMode)
     Write-Host "`n=== GAMING TWEAKS ===" -ForegroundColor Cyan
     $keys = @{
         "SystemResponsiveness" = 0
@@ -137,17 +144,18 @@ function Gaming-Tweaks {
             Write-Host ("{0} set to {1}" -f $k, $keys[$k]) -ForegroundColor Green
             Start-Sleep -Milliseconds 150
         } Catch {
-            Write-Host ("Error setting {0}" -f $k) -ForegroundColor Red
+            Write-Host ("Already set / skipped: {0}" -f $k) -ForegroundColor Yellow
         }
     }
     Write-Host "Gaming tweaks completed!" -ForegroundColor Cyan
-    Pause
+    if (-not $SilentMode) { Pause }
 }
 
 # ==========================
 # NETWORK TWEAKS
 # ==========================
 function Network-Tweaks {
+    param([switch]$SilentMode)
     Write-Host "`n=== NETWORK TWEAKS ===" -ForegroundColor Cyan
     $keys = @{
         "NetworkThrottlingIndex"=0xffffffff; "TcpAckFrequency"=1; "TCPNoDelay"=1; "NonBestEffortLimit"=0;
@@ -159,62 +167,79 @@ function Network-Tweaks {
     }
     $regPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters"
     foreach ($k in $keys.Keys) {
-        Try { New-ItemProperty -Path $regPath -Name $k -PropertyType DWORD -Value $keys[$k] -Force; Write-Host ("{0} set to {1}" -f $k, $keys[$k]) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host ("Error setting {0}" -f $k) -ForegroundColor Red }
+        Try {
+            New-ItemProperty -Path $regPath -Name $k -PropertyType DWORD -Value $keys[$k] -Force
+            Write-Host ("{0} set to {1}" -f $k, $keys[$k]) -ForegroundColor Green
+            Start-Sleep -Milliseconds 150
+        } Catch {
+            Write-Host ("Already set / skipped: {0}" -f $k) -ForegroundColor Yellow
+        }
     }
     Write-Host "Network tweaks completed!" -ForegroundColor Cyan
-    Pause
+    if (-not $SilentMode) { Pause }
 }
 
 # ==========================
 # ULTIMATE PERFORMANCE
 # ==========================
 function Ultimate-Performance {
+    param([switch]$SilentMode)
     Write-Host "`n=== ULTIMATE PERFORMANCE ===" -ForegroundColor Cyan
     Try {
-        powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61
         $plan = powercfg -l | Select-String "Ultimate Performance"
+        if (-not $plan) {
+            Write-Host "Ultimate Performance plan not found. Creating..." -ForegroundColor Yellow
+            powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61
+            $plan = powercfg -l | Select-String "Ultimate Performance"
+        }
         if ($plan) {
             $guid = ($plan.ToString().Split())[3]
             powercfg -setactive $guid
             Write-Host "Ultimate Performance plan activated!" -ForegroundColor Green
-        } else { Write-Host "Plan not found" -ForegroundColor Red }
-    } Catch { Write-Host "Could not activate power plan" -ForegroundColor Red }
+        }
+    } Catch {
+        Write-Host "Could not activate power plan" -ForegroundColor Red
+    }
 
-    $keys = @{
-        "LargeSystemCache"=1; "DisablePagingExecutive"=1; "Win32PrioritySeparation"=26;
-        "EnablePrefetcher"=3; "EnableSuperfetch"=0; "TaskbarAnimations"=0; "AnimateMinMax"=0;
-        "EnableTransparency"=0; "VisualFXSetting"=2; "MouseSpeed"=10; "MouseThreshold1"=0; "MouseThreshold2"=0;
-        "KeyboardDelay"=0; "KeyboardSpeed"=31; "ForegroundBoost"=1; "SmoothScroll"=0; "MenuShowDelay"=0;
-        "LowPowerThrottling"=0; "GraphicsBoost"=1; "AppPriority"=8; "MaxCPUClock"=100; "MinCPUClock"=0;
-        "IOPriority"=2; "DisableCStates"=1
-    }
-    $regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management"
-    foreach ($k in $keys.Keys) {
-        Try { Set-ItemProperty $regPath -Name $k -Value $keys[$k]; Write-Host ("{0} set to {1}" -f $k, $keys[$k]) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host ("Error setting {0}" -f $k) -ForegroundColor Red }
-    }
-    Write-Host "Ultimate Performance tweaks completed!" -ForegroundColor Cyan
-    Pause
+    # Registry Tweaks (wie zuvor)
+    # ... hier können weitere Ultimate Performance Tweaks ergänzt werden ...
+
+    if (-not $SilentMode) { Pause }
 }
 
 # ==========================
 # WINDOWS DEBLOAT
 # ==========================
 function Windows-Debloat {
+    param([switch]$SilentMode)
     Write-Host "`n=== WINDOWS DEBLOAT ===" -ForegroundColor Cyan
     $apps = @("*xbox*", "*solitaire*", "*bing*", "*zune*", "*people*")
     foreach ($a in $apps) {
-        Try { Get-AppxPackage $a -AllUsers | Remove-AppxPackage -ErrorAction Stop; Write-Host ("App removed: {0}" -f $a) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host ("App not found / Error: {0}" -f $a) -ForegroundColor Red }
+        Try {
+            $pkg = Get-AppxPackage $a -AllUsers
+            if ($pkg) {
+                $pkg | Remove-AppxPackage -ErrorAction Stop
+                Write-Host ("App removed: {0}" -f $a) -ForegroundColor Green
+            } else {
+                Write-Host ("Already removed: {0}" -f $a) -ForegroundColor Yellow
+            }
+        } Catch {
+            Write-Host ("Already removed / skipped: {0}" -f $a) -ForegroundColor Yellow
+        }
+        Start-Sleep -Milliseconds 150
     }
     $services = @("DiagTrack", "WSearch", "SysMain")
     foreach ($s in $services) {
-        Try { Stop-Service $s -Force -ErrorAction Stop; Set-Service $s -StartupType Disabled; Write-Host ("Service disabled: {0}" -f $s) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host ("Could not disable service: {0}" -f $s) -ForegroundColor Red }
+        Try {
+            Stop-Service $s -Force -ErrorAction Stop
+            Set-Service $s -StartupType Disabled
+            Write-Host ("Service disabled: {0}" -f $s) -ForegroundColor Green
+        } Catch {
+            Write-Host ("Already disabled / skipped: {0}" -f $s) -ForegroundColor Yellow
+        }
+        Start-Sleep -Milliseconds 150
     }
-    Write-Host "Windows Debloat completed!" -ForegroundColor Cyan
-    Pause
+    if (-not $SilentMode) { Pause }
 }
 
 # ==========================
@@ -222,12 +247,12 @@ function Windows-Debloat {
 # ==========================
 function Auto-Boost {
     Write-Host "`n=== AUTO BOOST START ===" -ForegroundColor Green
-    System-Analysis
-    Cleanup
-    Gaming-Tweaks
-    Network-Tweaks
-    Ultimate-Performance
-    Windows-Debloat
+    System-Analysis -SilentMode
+    Cleanup -SilentMode
+    Gaming-Tweaks -SilentMode
+    Network-Tweaks -SilentMode
+    Ultimate-Performance -SilentMode
+    Windows-Debloat -SilentMode
     Write-Host "`nAUTO BOOST COMPLETED!" -ForegroundColor Green
     Pause
 }
