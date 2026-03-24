@@ -104,16 +104,41 @@ function Cleanup {
 function Gaming-Tweaks {
     Write-Host "`n=== GAMING TWEAKS ===" -ForegroundColor Cyan
     $keys = @{
-        "SystemResponsiveness" = 0; "SchedulingCategory"="High"; "GPUPriority"=8; "Priority"=6; "Characteristics"=0x20;
-        "Win32PrioritySeparation"=26; "EnablePrefetcher"=3; "EnableSuperfetch"=0; "LargeSystemCache"=1; "DisablePagingExecutive"=1;
-        "TaskbarAnimations"=0; "AnimateMinMax"=0; "EnableTransparency"=0; "VisualFXSetting"=2; "MouseSpeed"=10;
-        "MouseThreshold1"=0; "MouseThreshold2"=0; "KeyboardDelay"=0; "KeyboardSpeed"=31; "ForegroundBoost"=1;
-        "SmoothScroll"=0; "MenuShowDelay"=0; "LowPowerThrottling"=0; "GraphicsBoost"=1; "AppPriority"=8
+        "SystemResponsiveness" = 0
+        "SchedulingCategory" = "High"
+        "GPUPriority" = 8
+        "Priority" = 6
+        "Characteristics" = 0x20
+        "Win32PrioritySeparation" = 26
+        "EnablePrefetcher" = 3
+        "EnableSuperfetch" = 0
+        "LargeSystemCache" = 1
+        "DisablePagingExecutive" = 1
+        "TaskbarAnimations" = 0
+        "AnimateMinMax" = 0
+        "EnableTransparency" = 0
+        "VisualFXSetting" = 2
+        "MouseSpeed" = 10
+        "MouseThreshold1" = 0
+        "MouseThreshold2" = 0
+        "KeyboardDelay" = 0
+        "KeyboardSpeed" = 31
+        "ForegroundBoost" = 1
+        "SmoothScroll" = 0
+        "MenuShowDelay" = 0
+        "LowPowerThrottling" = 0
+        "GraphicsBoost" = 1
+        "AppPriority" = 8
     }
     $regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
     foreach ($k in $keys.Keys) {
-        Try { Set-ItemProperty $regPath -Name $k -Value $keys[$k] -ErrorAction Stop; Write-Host ("{0} set to {1}" -f $k, $keys[$k]) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host ("Error setting {0}" -f $k) -ForegroundColor Red }
+        Try {
+            Set-ItemProperty $regPath -Name $k -Value $keys[$k] -ErrorAction Stop
+            Write-Host ("{0} set to {1}" -f $k, $keys[$k]) -ForegroundColor Green
+            Start-Sleep -Milliseconds 150
+        } Catch {
+            Write-Host ("Error setting {0}" -f $k) -ForegroundColor Red
+        }
     }
     Write-Host "Gaming tweaks completed!" -ForegroundColor Cyan
     Pause
