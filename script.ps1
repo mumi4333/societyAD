@@ -197,18 +197,6 @@ function Windows-Debloat {
 }
 
 # ==========================
-# CREATE BACKUP
-# ==========================
-function Backup {
-    Write-Host "`n=== CREATE BACKUP ===" -ForegroundColor Cyan
-    $path = "$env:USERPROFILE\Desktop\Backup"
-    New-Item -ItemType Directory -Path $path -Force | Out-Null
-    reg export HKLM "$path\registry.reg" /y
-    Write-Host ("Backup created at {0}" -f $path) -ForegroundColor Green
-    Pause
-}
-
-# ==========================
 # STARTUP OPTIMIZATION
 # ==========================
 function Optimize-Startup {
