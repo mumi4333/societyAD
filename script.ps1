@@ -1,5 +1,5 @@
 # ==========================================
-# PC MEGA OPTIMIZER V3 – Auto Boost Edition
+# PC MEGA OPTIMIZER V3 – Auto Boost Edition (iex-ready)
 # ==========================================
 
 # ==========================
@@ -60,14 +60,14 @@ function System-Analyse {
     Write-Host "RAM Frei: $freeRam GB"
 
     Write-Host "`nGPU:"
-    Get-CimInstance Win32_VideoController | ForEach-Object { Write-Host "- $($_.Name)" }
+    Get-CimInstance Win32_VideoController | ForEach-Object { Write-Host ("- {0}" -f $_.Name) }
 
     Write-Host "`nDatenträger:"
     Get-PhysicalDisk | ForEach-Object {
         $status = $_.HealthStatus
         $type = $_.MediaType
-        if ($status -eq "Healthy") { Write-Host "- $($_.FriendlyName) | $type | OK" -ForegroundColor Green }
-        else { Write-Host "- $($_.FriendlyName) | $type | PROBLEM" -ForegroundColor Red }
+        if ($status -eq "Healthy") { Write-Host ("- {0} | {1} | OK" -f $_.FriendlyName, $type) -ForegroundColor Green }
+        else { Write-Host ("- {0} | {1} | PROBLEM" -f $_.FriendlyName, $type) -ForegroundColor Red }
     }
 
     Write-Host "`nTop Prozesse (CPU aktuell):"
@@ -77,11 +77,11 @@ function System-Analyse {
     if ($cpuLoad -gt 80) { Write-Host "CPU Bottleneck erkannt!" -ForegroundColor Red }
     if ($freeRam -lt 4) { Write-Host "RAM Bottleneck erkannt!" -ForegroundColor Red }
     $processCount = (Get-Process).Count
-    if ($processCount -gt 200) { Write-Host "Zu viele Hintergrundprozesse! ($processCount)" -ForegroundColor Yellow }
+    if ($processCount -gt 200) { Write-Host ("Zu viele Hintergrundprozesse! ({0})" -f $processCount) -ForegroundColor Yellow }
     if ($cpuLoad -lt 50 -and $freeRam -gt 8) { Write-Host "System läuft sehr gut" -ForegroundColor Green }
 
-    # 25+ Checks sichtbar mit korrektem $_
-    1..25 | ForEach-Object { Write-Host "Check ${_}: OK" -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
+    # 25+ Checks sichtbar, safe für Invoke-Expression
+    1..25 | ForEach-Object { Write-Host ("Check {0}: OK" -f $_) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
 
     Pause
 }
@@ -93,10 +93,10 @@ function Cleanup {
     Write-Host "`n=== TEMP CLEANUP ===" -ForegroundColor Cyan
     $paths = @("$env:TEMP\*", "C:\Windows\Temp\*")
     foreach ($p in $paths) {
-        Try { Remove-Item $p -Recurse -Force -ErrorAction Stop; Write-Host "Bereinigt: $p" -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host "Fehler beim Bereinigen: $p" -ForegroundColor Red }
+        Try { Remove-Item $p -Recurse -Force -ErrorAction Stop; Write-Host ("Bereinigt: {0}" -f $p) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
+        Catch { Write-Host ("Fehler beim Bereinigen: {0}" -f $p) -ForegroundColor Red }
     }
-    1..20 | ForEach-Object { Write-Host "Cleanup-Tweak ${_} abgeschlossen" -ForegroundColor Green; Start-Sleep -Milliseconds 100 }
+    1..20 | ForEach-Object { Write-Host ("Cleanup-Tweak {0} abgeschlossen" -f $_) -ForegroundColor Green; Start-Sleep -Milliseconds 100 }
     Pause
 }
 
@@ -114,8 +114,8 @@ function Gaming-Tweaks {
     }
     $regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
     foreach ($k in $keys.Keys) {
-        Try { Set-ItemProperty $regPath -Name $k -Value $keys[$k] -ErrorAction Stop; Write-Host "$k gesetzt auf $($keys[$k])" -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host "Fehler bei $k" -ForegroundColor Red }
+        Try { Set-ItemProperty $regPath -Name $k -Value $keys[$k] -ErrorAction Stop; Write-Host ("{0} gesetzt auf {1}" -f $k, $keys[$k]) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
+        Catch { Write-Host ("Fehler bei {0}" -f $k) -ForegroundColor Red }
     }
     Write-Host "Gaming Tweaks abgeschlossen!" -ForegroundColor Cyan
     Pause
@@ -136,8 +136,8 @@ function Network-Tweaks {
     }
     $regPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters"
     foreach ($k in $keys.Keys) {
-        Try { New-ItemProperty -Path $regPath -Name $k -PropertyType DWORD -Value $keys[$k] -Force; Write-Host "$k gesetzt auf $($keys[$k])" -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host "Fehler bei $k" -ForegroundColor Red }
+        Try { New-ItemProperty -Path $regPath -Name $k -PropertyType DWORD -Value $keys[$k] -Force; Write-Host ("{0} gesetzt auf {1}" -f $k, $keys[$k]) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
+        Catch { Write-Host ("Fehler bei {0}" -f $k) -ForegroundColor Red }
     }
     Write-Host "Network Tweaks abgeschlossen!" -ForegroundColor Cyan
     Pause
@@ -169,8 +169,8 @@ function Ultimate-Performance {
     }
     $regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management"
     foreach ($k in $keys.Keys) {
-        Try { Set-ItemProperty $regPath -Name $k -Value $keys[$k]; Write-Host "$k gesetzt auf $($keys[$k])" -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host "Fehler bei $k" -ForegroundColor Red }
+        Try { Set-ItemProperty $regPath -Name $k -Value $keys[$k]; Write-Host ("{0} gesetzt auf {1}" -f $k, $keys[$k]) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
+        Catch { Write-Host ("Fehler bei {0}" -f $k) -ForegroundColor Red }
     }
     Write-Host "Ultimate Performance Tweaks abgeschlossen!" -ForegroundColor Cyan
     Pause
@@ -183,13 +183,13 @@ function Windows-Debloat {
     Write-Host "`n=== WINDOWS DEBLOAT ===" -ForegroundColor Cyan
     $apps = @("*xbox*", "*solitaire*", "*bing*", "*zune*", "*people*")
     foreach ($a in $apps) {
-        Try { Get-AppxPackage $a -AllUsers | Remove-AppxPackage -ErrorAction Stop; Write-Host "App entfernt: $a" -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host "App nicht gefunden / Fehler: $a" -ForegroundColor Red }
+        Try { Get-AppxPackage $a -AllUsers | Remove-AppxPackage -ErrorAction Stop; Write-Host ("App entfernt: {0}" -f $a) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
+        Catch { Write-Host ("App nicht gefunden / Fehler: {0}" -f $a) -ForegroundColor Red }
     }
     $services = @("DiagTrack", "WSearch", "SysMain")
     foreach ($s in $services) {
-        Try { Stop-Service $s -Force -ErrorAction Stop; Set-Service $s -StartupType Disabled; Write-Host "Service deaktiviert: $s" -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host "Service konnte nicht deaktiviert werden: $s" -ForegroundColor Red }
+        Try { Stop-Service $s -Force -ErrorAction Stop; Set-Service $s -StartupType Disabled; Write-Host ("Service deaktiviert: {0}" -f $s) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
+        Catch { Write-Host ("Service konnte nicht deaktiviert werden: {0}" -f $s) -ForegroundColor Red }
     }
     Write-Host "Windows Debloat abgeschlossen!" -ForegroundColor Cyan
     Pause
@@ -203,7 +203,7 @@ function Backup {
     $path = "$env:USERPROFILE\Desktop\Backup"
     New-Item -ItemType Directory -Path $path -Force | Out-Null
     reg export HKLM "$path\registry.reg" /y
-    Write-Host "Backup erstellt unter $path" -ForegroundColor Green
+    Write-Host ("Backup erstellt unter {0}" -f $path) -ForegroundColor Green
     Pause
 }
 
