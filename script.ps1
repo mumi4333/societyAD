@@ -24,7 +24,7 @@ if ($attempts -ge 3) { exit }
 function Show-Menu {
     Clear-Host
     Write-Host "=================================" -ForegroundColor Cyan
-    Write-Host "        PC MEGA OPTIMIZER V3     " -ForegroundColor Cyan
+    Write-Host "        Society Optimizer     " -ForegroundColor Cyan
     Write-Host "=================================" -ForegroundColor Cyan
     Write-Host "1. System Analysis" -ForegroundColor Yellow
     Write-Host "2. Temp Cleanup" -ForegroundColor Yellow
@@ -32,7 +32,7 @@ function Show-Menu {
     Write-Host "4. Network Tweaks" -ForegroundColor Yellow
     Write-Host "5. Ultimate Performance" -ForegroundColor Yellow
     Write-Host "6. Windows Debloat" -ForegroundColor Yellow
-    Write-Host "8. AUTO BOOST (optimize everything, no confirmation)" -ForegroundColor Green
+    Write-Host "7. AUTO BOOST (optimize everything, no confirmation)" -ForegroundColor Green
     Write-Host "0. Exit" -ForegroundColor Red
 }
 
@@ -270,7 +270,7 @@ do {
         "4" { Network-Tweaks }
         "5" { Ultimate-Performance }
         "6" { Windows-Debloat }
-        "8" { Auto-Boost }
+        "7" { Auto-Boost }
         "0" { exit }
     }
 } while ($true)
