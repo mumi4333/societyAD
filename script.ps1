@@ -24,7 +24,7 @@ if ($attempts -ge 3) { exit }
 function Show-Menu {
     Clear-Host
     Write-Host "=================================" -ForegroundColor Cyan
-    Write-Host "        Society Optimizer     " -ForegroundColor Cyan
+    Write-Host "        Society Tweak     " -ForegroundColor Cyan
     Write-Host "=================================" -ForegroundColor Cyan
     Write-Host "1. System Analysis" -ForegroundColor Yellow
     Write-Host "2. Temp Cleanup" -ForegroundColor Yellow
