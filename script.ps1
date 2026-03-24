@@ -1,68 +1,68 @@
 # ==========================================
-# PC MEGA OPTIMIZER V3 – Auto Boost Edition (iex-ready)
+# Society PC Tweaker & Optimizer
 # ==========================================
 
 # ==========================
-# PASSWORTSCHUTZ
+# PASSWORD PROTECTION
 # ==========================
 $securePassword = "roni7777"
 $attempts = 0
 do {
-    $inputPassword = Read-Host "Bitte Passwort eingeben" -AsSecureString
+    $inputPassword = Read-Host "Please enter password" -AsSecureString
     $plainInput = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
         [Runtime.InteropServices.Marshal]::SecureStringToBSTR($inputPassword)
     )
     if ($plainInput -eq $securePassword) { break }
     $attempts++
-    Write-Host "Falsches Passwort!" -ForegroundColor Red
+    Write-Host "Wrong password!" -ForegroundColor Red
 } while ($attempts -lt 3)
 if ($attempts -ge 3) { exit }
 
 # ==========================
-# MENÜ
+# MENU
 # ==========================
 function Show-Menu {
     Clear-Host
     Write-Host "=================================" -ForegroundColor Cyan
     Write-Host "        PC MEGA OPTIMIZER V3     " -ForegroundColor Cyan
     Write-Host "=================================" -ForegroundColor Cyan
-    Write-Host "1. System Analyse" -ForegroundColor Yellow
+    Write-Host "1. System Analysis" -ForegroundColor Yellow
     Write-Host "2. Temp Cleanup" -ForegroundColor Yellow
     Write-Host "3. Gaming Tweaks" -ForegroundColor Yellow
-    Write-Host "4. Netzwerk Tweaks" -ForegroundColor Yellow
+    Write-Host "4. Network Tweaks" -ForegroundColor Yellow
     Write-Host "5. Ultimate Performance" -ForegroundColor Yellow
     Write-Host "6. Windows Debloat" -ForegroundColor Yellow
-    Write-Host "7. Backup erstellen" -ForegroundColor Yellow
-    Write-Host "8. AUTO BOOST (alles optimieren, keine Bestätigung)" -ForegroundColor Green
-    Write-Host "0. Beenden" -ForegroundColor Red
+    Write-Host "7. Create Backup" -ForegroundColor Yellow
+    Write-Host "8. AUTO BOOST (optimize everything, no confirmation)" -ForegroundColor Green
+    Write-Host "0. Exit" -ForegroundColor Red
 }
 
 # ==========================
-# SYSTEM ANALYSE
+# SYSTEM ANALYSIS
 # ==========================
-function System-Analyse {
+function System-Analysis {
     Clear-Host
-    Write-Host "=== SYSTEM ANALYSE ===" -ForegroundColor Cyan
+    Write-Host "=== SYSTEM ANALYSIS ===" -ForegroundColor Cyan
     $cpu = Get-CimInstance Win32_Processor
     try {
         $cpuLoad = (Get-Counter '\Processor(_Total)\% Processor Time').CounterSamples[0].CookedValue
         $cpuLoad = [math]::Round($cpuLoad, 2)
     } catch { $cpuLoad = 0 }
     Write-Host "CPU: $($cpu.Name)"
-    Write-Host "CPU Auslastung: $cpuLoad %"
+    Write-Host "CPU Load: $cpuLoad %"
 
     $os = Get-CimInstance Win32_OperatingSystem
     $totalRam = [math]::Round($os.TotalVisibleMemorySize/1MB,2)
     $freeRam = [math]::Round($os.FreePhysicalMemory/1MB,2)
     $usedRam = [math]::Round($totalRam - $freeRam,2)
     Write-Host "RAM Total: $totalRam GB"
-    Write-Host "RAM Belegt: $usedRam GB"
-    Write-Host "RAM Frei: $freeRam GB"
+    Write-Host "RAM Used: $usedRam GB"
+    Write-Host "RAM Free: $freeRam GB"
 
     Write-Host "`nGPU:"
     Get-CimInstance Win32_VideoController | ForEach-Object { Write-Host ("- {0}" -f $_.Name) }
 
-    Write-Host "`nDatenträger:"
+    Write-Host "`nDrives:"
     Get-PhysicalDisk | ForEach-Object {
         $status = $_.HealthStatus
         $type = $_.MediaType
@@ -70,17 +70,17 @@ function System-Analyse {
         else { Write-Host ("- {0} | {1} | PROBLEM" -f $_.FriendlyName, $type) -ForegroundColor Red }
     }
 
-    Write-Host "`nTop Prozesse (CPU aktuell):"
+    Write-Host "`nTop Processes (CPU):"
     Get-Process | Sort-Object CPU -Descending | Select-Object -First 5 Name, CPU | Format-Table -AutoSize
 
-    Write-Host "`n=== BOTTLENECK ANALYSE ===" -ForegroundColor Yellow
-    if ($cpuLoad -gt 80) { Write-Host "CPU Bottleneck erkannt!" -ForegroundColor Red }
-    if ($freeRam -lt 4) { Write-Host "RAM Bottleneck erkannt!" -ForegroundColor Red }
+    Write-Host "`n=== BOTTLENECK ANALYSIS ===" -ForegroundColor Yellow
+    if ($cpuLoad -gt 80) { Write-Host "CPU bottleneck detected!" -ForegroundColor Red }
+    if ($freeRam -lt 4) { Write-Host "RAM bottleneck detected!" -ForegroundColor Red }
     $processCount = (Get-Process).Count
-    if ($processCount -gt 200) { Write-Host ("Zu viele Hintergrundprozesse! ({0})" -f $processCount) -ForegroundColor Yellow }
-    if ($cpuLoad -lt 50 -and $freeRam -gt 8) { Write-Host "System läuft sehr gut" -ForegroundColor Green }
+    if ($processCount -gt 200) { Write-Host ("Too many background processes! ({0})" -f $processCount) -ForegroundColor Yellow }
+    if ($cpuLoad -lt 50 -and $freeRam -gt 8) { Write-Host "System is running very well" -ForegroundColor Green }
 
-    # 25+ Checks sichtbar, safe für Invoke-Expression
+    # 25+ checks visible, safe for Invoke-Expression
     1..25 | ForEach-Object { Write-Host ("Check {0}: OK" -f $_) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
 
     Pause
@@ -93,10 +93,10 @@ function Cleanup {
     Write-Host "`n=== TEMP CLEANUP ===" -ForegroundColor Cyan
     $paths = @("$env:TEMP\*", "C:\Windows\Temp\*")
     foreach ($p in $paths) {
-        Try { Remove-Item $p -Recurse -Force -ErrorAction Stop; Write-Host ("Bereinigt: {0}" -f $p) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host ("Fehler beim Bereinigen: {0}" -f $p) -ForegroundColor Red }
+        Try { Remove-Item $p -Recurse -Force -ErrorAction Stop; Write-Host ("Cleaned: {0}" -f $p) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
+        Catch { Write-Host ("Error cleaning: {0}" -f $p) -ForegroundColor Red }
     }
-    1..20 | ForEach-Object { Write-Host ("Cleanup-Tweak {0} abgeschlossen" -f $_) -ForegroundColor Green; Start-Sleep -Milliseconds 100 }
+    1..20 | ForEach-Object { Write-Host ("Cleanup tweak {0} completed" -f $_) -ForegroundColor Green; Start-Sleep -Milliseconds 100 }
     Pause
 }
 
@@ -114,10 +114,10 @@ function Gaming-Tweaks {
     }
     $regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
     foreach ($k in $keys.Keys) {
-        Try { Set-ItemProperty $regPath -Name $k -Value $keys[$k] -ErrorAction Stop; Write-Host ("{0} gesetzt auf {1}" -f $k, $keys[$k]) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host ("Fehler bei {0}" -f $k) -ForegroundColor Red }
+        Try { Set-ItemProperty $regPath -Name $k -Value $keys[$k] -ErrorAction Stop; Write-Host ("{0} set to {1}" -f $k, $keys[$k]) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
+        Catch { Write-Host ("Error setting {0}" -f $k) -ForegroundColor Red }
     }
-    Write-Host "Gaming Tweaks abgeschlossen!" -ForegroundColor Cyan
+    Write-Host "Gaming tweaks completed!" -ForegroundColor Cyan
     Pause
 }
 
@@ -136,10 +136,10 @@ function Network-Tweaks {
     }
     $regPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters"
     foreach ($k in $keys.Keys) {
-        Try { New-ItemProperty -Path $regPath -Name $k -PropertyType DWORD -Value $keys[$k] -Force; Write-Host ("{0} gesetzt auf {1}" -f $k, $keys[$k]) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host ("Fehler bei {0}" -f $k) -ForegroundColor Red }
+        Try { New-ItemProperty -Path $regPath -Name $k -PropertyType DWORD -Value $keys[$k] -Force; Write-Host ("{0} set to {1}" -f $k, $keys[$k]) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
+        Catch { Write-Host ("Error setting {0}" -f $k) -ForegroundColor Red }
     }
-    Write-Host "Network Tweaks abgeschlossen!" -ForegroundColor Cyan
+    Write-Host "Network tweaks completed!" -ForegroundColor Cyan
     Pause
 }
 
@@ -154,9 +154,9 @@ function Ultimate-Performance {
         if ($plan) {
             $guid = ($plan.ToString().Split())[3]
             powercfg -setactive $guid
-            Write-Host "Ultimate Performance Plan aktiviert!" -ForegroundColor Green
-        } else { Write-Host "Plan nicht gefunden" -ForegroundColor Red }
-    } Catch { Write-Host "Power Plan konnte nicht aktiviert werden" -ForegroundColor Red }
+            Write-Host "Ultimate Performance plan activated!" -ForegroundColor Green
+        } else { Write-Host "Plan not found" -ForegroundColor Red }
+    } Catch { Write-Host "Could not activate power plan" -ForegroundColor Red }
 
     # 25+ Registry Tweaks
     $keys = @{
@@ -169,10 +169,10 @@ function Ultimate-Performance {
     }
     $regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management"
     foreach ($k in $keys.Keys) {
-        Try { Set-ItemProperty $regPath -Name $k -Value $keys[$k]; Write-Host ("{0} gesetzt auf {1}" -f $k, $keys[$k]) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host ("Fehler bei {0}" -f $k) -ForegroundColor Red }
+        Try { Set-ItemProperty $regPath -Name $k -Value $keys[$k]; Write-Host ("{0} set to {1}" -f $k, $keys[$k]) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
+        Catch { Write-Host ("Error setting {0}" -f $k) -ForegroundColor Red }
     }
-    Write-Host "Ultimate Performance Tweaks abgeschlossen!" -ForegroundColor Cyan
+    Write-Host "Ultimate Performance tweaks completed!" -ForegroundColor Cyan
     Pause
 }
 
@@ -183,15 +183,15 @@ function Windows-Debloat {
     Write-Host "`n=== WINDOWS DEBLOAT ===" -ForegroundColor Cyan
     $apps = @("*xbox*", "*solitaire*", "*bing*", "*zune*", "*people*")
     foreach ($a in $apps) {
-        Try { Get-AppxPackage $a -AllUsers | Remove-AppxPackage -ErrorAction Stop; Write-Host ("App entfernt: {0}" -f $a) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host ("App nicht gefunden / Fehler: {0}" -f $a) -ForegroundColor Red }
+        Try { Get-AppxPackage $a -AllUsers | Remove-AppxPackage -ErrorAction Stop; Write-Host ("App removed: {0}" -f $a) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
+        Catch { Write-Host ("App not found / Error: {0}" -f $a) -ForegroundColor Red }
     }
     $services = @("DiagTrack", "WSearch", "SysMain")
     foreach ($s in $services) {
-        Try { Stop-Service $s -Force -ErrorAction Stop; Set-Service $s -StartupType Disabled; Write-Host ("Service deaktiviert: {0}" -f $s) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host ("Service konnte nicht deaktiviert werden: {0}" -f $s) -ForegroundColor Red }
+        Try { Stop-Service $s -Force -ErrorAction Stop; Set-Service $s -StartupType Disabled; Write-Host ("Service disabled: {0}" -f $s) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
+        Catch { Write-Host ("Could not disable service: {0}" -f $s) -ForegroundColor Red }
     }
-    Write-Host "Windows Debloat abgeschlossen!" -ForegroundColor Cyan
+    Write-Host "Windows Debloat completed!" -ForegroundColor Cyan
     Pause
 }
 
@@ -199,11 +199,11 @@ function Windows-Debloat {
 # BACKUP
 # ==========================
 function Backup {
-    Write-Host "`n=== BACKUP ERSTELLEN ===" -ForegroundColor Cyan
+    Write-Host "`n=== CREATE BACKUP ===" -ForegroundColor Cyan
     $path = "$env:USERPROFILE\Desktop\Backup"
     New-Item -ItemType Directory -Path $path -Force | Out-Null
     reg export HKLM "$path\registry.reg" /y
-    Write-Host ("Backup erstellt unter {0}" -f $path) -ForegroundColor Green
+    Write-Host ("Backup created at {0}" -f $path) -ForegroundColor Green
     Pause
 }
 
@@ -212,14 +212,14 @@ function Backup {
 # ==========================
 function Auto-Boost {
     Write-Host "`n=== AUTO BOOST START ===" -ForegroundColor Green
-    System-Analyse
+    System-Analysis
     Cleanup
     Gaming-Tweaks
     Network-Tweaks
     Ultimate-Performance
     Windows-Debloat
     Backup
-    Write-Host "`nAUTO BOOST ABGESCHLOSSEN!" -ForegroundColor Green
+    Write-Host "`nAUTO BOOST COMPLETED!" -ForegroundColor Green
     Pause
 }
 
@@ -228,9 +228,9 @@ function Auto-Boost {
 # ==========================
 do {
     Show-Menu
-    $choice = Read-Host "Option wählen"
+    $choice = Read-Host "Select an option"
     switch ($choice) {
-        "1" { System-Analyse }
+        "1" { System-Analysis }
         "2" { Cleanup }
         "3" { Gaming-Tweaks }
         "4" { Network-Tweaks }
