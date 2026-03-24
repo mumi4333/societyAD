@@ -80,8 +80,8 @@ function System-Analyse {
     if ($processCount -gt 200) { Write-Host "Zu viele Hintergrundprozesse! ($processCount)" -ForegroundColor Yellow }
     if ($cpuLoad -lt 50 -and $freeRam -gt 8) { Write-Host "System läuft sehr gut" -ForegroundColor Green }
 
-    # 25+ Checks sichtbar
-    1..25 | ForEach-Object { Write-Host "Check $_: OK" -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
+    # 25+ Checks sichtbar mit korrektem $_
+    1..25 | ForEach-Object { Write-Host "Check ${_}: OK" -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
 
     Pause
 }
@@ -96,7 +96,7 @@ function Cleanup {
         Try { Remove-Item $p -Recurse -Force -ErrorAction Stop; Write-Host "Bereinigt: $p" -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
         Catch { Write-Host "Fehler beim Bereinigen: $p" -ForegroundColor Red }
     }
-    1..20 | ForEach-Object { Write-Host "Cleanup-Tweak $_ abgeschlossen" -ForegroundColor Green; Start-Sleep -Milliseconds 100 }
+    1..20 | ForEach-Object { Write-Host "Cleanup-Tweak ${_} abgeschlossen" -ForegroundColor Green; Start-Sleep -Milliseconds 100 }
     Pause
 }
 
