@@ -1,5 +1,5 @@
 # ==========================================
-# Society PC Tweaker & Optimizer (Monster Edition)
+# Society PC Tweaker & Optimizer
 # ==========================================
 
 # ==========================
@@ -24,7 +24,7 @@ if ($attempts -ge 3) { exit }
 function Show-Menu {
     Clear-Host
     Write-Host "=================================" -ForegroundColor Cyan
-    Write-Host "     PC MEGA OPTIMIZER V4       " -ForegroundColor Cyan
+    Write-Host "        PC MEGA OPTIMIZER V3     " -ForegroundColor Cyan
     Write-Host "=================================" -ForegroundColor Cyan
     Write-Host "1. System Analysis" -ForegroundColor Yellow
     Write-Host "2. Temp Cleanup" -ForegroundColor Yellow
@@ -32,12 +32,7 @@ function Show-Menu {
     Write-Host "4. Network Tweaks" -ForegroundColor Yellow
     Write-Host "5. Ultimate Performance" -ForegroundColor Yellow
     Write-Host "6. Windows Debloat" -ForegroundColor Yellow
-    Write-Host "7. Create Backup" -ForegroundColor Yellow
     Write-Host "8. AUTO BOOST (optimize everything, no confirmation)" -ForegroundColor Green
-    Write-Host "9. Startup Optimization" -ForegroundColor Yellow
-    Write-Host "10. Disk Optimization" -ForegroundColor Yellow
-    Write-Host "11. Security & Privacy Tweaks" -ForegroundColor Yellow
-    Write-Host "12. Network Booster" -ForegroundColor Yellow
     Write-Host "0. Exit" -ForegroundColor Red
 }
 
@@ -85,6 +80,7 @@ function System-Analysis {
     if ($cpuLoad -lt 50 -and $freeRam -gt 8) { Write-Host "System is running very well" -ForegroundColor Green }
 
     1..25 | ForEach-Object { Write-Host ("Check {0}: OK" -f $_) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
+
     Pause
 }
 
@@ -117,7 +113,7 @@ function Gaming-Tweaks {
     $regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
     foreach ($k in $keys.Keys) {
         Try { Set-ItemProperty $regPath -Name $k -Value $keys[$k] -ErrorAction Stop; Write-Host ("{0} set to {1}" -f $k, $keys[$k]) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host ("Error setting {0}" -ForegroundColor Red) }
+        Catch { Write-Host ("Error setting {0}" -f $k) -ForegroundColor Red }
     }
     Write-Host "Gaming tweaks completed!" -ForegroundColor Cyan
     Pause
@@ -139,7 +135,7 @@ function Network-Tweaks {
     $regPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters"
     foreach ($k in $keys.Keys) {
         Try { New-ItemProperty -Path $regPath -Name $k -PropertyType DWORD -Value $keys[$k] -Force; Write-Host ("{0} set to {1}" -f $k, $keys[$k]) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host ("Error setting {0}" -ForegroundColor Red) }
+        Catch { Write-Host ("Error setting {0}" -f $k) -ForegroundColor Red }
     }
     Write-Host "Network tweaks completed!" -ForegroundColor Cyan
     Pause
@@ -171,7 +167,7 @@ function Ultimate-Performance {
     $regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management"
     foreach ($k in $keys.Keys) {
         Try { Set-ItemProperty $regPath -Name $k -Value $keys[$k]; Write-Host ("{0} set to {1}" -f $k, $keys[$k]) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host ("Error setting {0}" -ForegroundColor Red) }
+        Catch { Write-Host ("Error setting {0}" -f $k) -ForegroundColor Red }
     }
     Write-Host "Ultimate Performance tweaks completed!" -ForegroundColor Cyan
     Pause
@@ -185,79 +181,14 @@ function Windows-Debloat {
     $apps = @("*xbox*", "*solitaire*", "*bing*", "*zune*", "*people*")
     foreach ($a in $apps) {
         Try { Get-AppxPackage $a -AllUsers | Remove-AppxPackage -ErrorAction Stop; Write-Host ("App removed: {0}" -f $a) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host ("App not found / Error: {0}" -ForegroundColor Red) }
+        Catch { Write-Host ("App not found / Error: {0}" -f $a) -ForegroundColor Red }
     }
     $services = @("DiagTrack", "WSearch", "SysMain")
     foreach ($s in $services) {
         Try { Stop-Service $s -Force -ErrorAction Stop; Set-Service $s -StartupType Disabled; Write-Host ("Service disabled: {0}" -f $s) -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
-        Catch { Write-Host ("Could not disable service: {0}" -ForegroundColor Red) }
+        Catch { Write-Host ("Could not disable service: {0}" -f $s) -ForegroundColor Red }
     }
     Write-Host "Windows Debloat completed!" -ForegroundColor Cyan
-    Pause
-}
-
-# ==========================
-# STARTUP OPTIMIZATION
-# ==========================
-function Optimize-Startup {
-    Write-Host "`n=== STARTUP OPTIMIZATION ===" -ForegroundColor Cyan
-    $startupItems = Get-CimInstance Win32_StartupCommand | Sort-Object Location
-    if ($startupItems.Count -eq 0) { Write-Host "No startup items found." -ForegroundColor Green; Pause; return }
-    $i = 1
-    foreach ($item in $startupItems) { Write-Host ("{0}. {1} | Path: {2} | Location: {3}" -f $i, $item.Name, $item.Command, $item.Location); $i++ }
-    $disable = Read-Host "Disable unnecessary startup items? (Y/N)"
-    if ($disable -match "^[Yy]$") {
-        foreach ($item in $startupItems) {
-            if ($item.Location -eq "HKCU" -or $item.Location -eq "HKLM") {
-                Try { Remove-ItemProperty -Path $item.Location -Name $item.Name -ErrorAction Stop; Write-Host ("Disabled: {0}" -f $item.Name) -ForegroundColor Green }
-                Catch { Write-Host ("Could not disable: {0}" -f $item.Name) -ForegroundColor Red }
-            }
-        }
-    }
-    Pause
-}
-
-# ==========================
-# DISK OPTIMIZATION
-# ==========================
-function Disk-Optimization {
-    Write-Host "`n=== ADVANCED DISK MANAGEMENT ===" -ForegroundColor Cyan
-    $disks = Get-PhysicalDisk | Where-Object MediaType -ne "Unspecified"
-    foreach ($disk in $disks) {
-        Write-Host ("- {0} | Type: {1} | Status: {2}" -f $disk.FriendlyName, $disk.MediaType, $disk.HealthStatus)
-        if ($disk.MediaType -eq "SSD") { fsutil behavior set DisableDeleteNotify 0 | Out-Null; Write-Host "TRIM enabled" -ForegroundColor Green }
-        else { Optimize-Volume -DriveLetter $disk.FriendlyName.Substring(0,1) -Defrag -Verbose }
-    }
-    $cleanupPaths = @("$env:USERPROFILE\Downloads\*", "$env:USERPROFILE\Documents\Logs\*")
-    foreach ($p in $cleanupPaths) { Try { Remove-Item $p -Recurse -Force -ErrorAction Stop; Write-Host ("Cleaned: {0}" -f $p) -ForegroundColor Green } Catch { Write-Host ("Error cleaning: {0}" -f $p) -ForegroundColor Red } }
-    Pause
-}
-
-# ==========================
-# SECURITY & PRIVACY
-# ==========================
-function Security-Privacy {
-    Write-Host "`n=== SECURITY & PRIVACY ===" -ForegroundColor Cyan
-    $services = @("DiagTrack", "dmwappushservice", "WSearch")
-    foreach ($s in $services) { Try { Stop-Service $s -Force -ErrorAction Stop; Set-Service $s -StartupType Disabled; Write-Host ("Disabled: {0}" -f $s) -ForegroundColor Green } Catch { Write-Host ("Could not disable: {0}" -f $s) -ForegroundColor Red } }
-    $keys = @{ "AllowTelemetry"=0; "CommercialId"=0; "TargetContentDeliveryLevel"=0 }
-    $regPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection"
-    foreach ($k in $keys.Keys) { Try { Set-ItemProperty $regPath -Name $k -Value $keys[$k] -Force; Write-Host ("{0} set to {1}" -f $k, $keys[$k]) -ForegroundColor Green } Catch { Write-Host ("Error setting {0}" -ForegroundColor Red } }
-    Write-Host "Security & Privacy tweaks completed!" -ForegroundColor Cyan
-    Pause
-}
-
-# ==========================
-# NETWORK BOOSTER
-# ==========================
-function Network-Booster {
-    Write-Host "`n=== NETWORK BOOSTER ===" -ForegroundColor Cyan
-    ipconfig /flushdns | Out-Null
-    Write-Host "DNS cache flushed." -ForegroundColor Green
-    $tcpKeys = @{ "TcpAckFrequency"=1; "TCPNoDelay"=1; "NetworkThrottlingIndex"=0xffffffff }
-    $regPath = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters"
-    foreach ($k in $tcpKeys.Keys) { Try { New-ItemProperty -Path $regPath -Name $k -PropertyType DWORD -Value $tcpKeys[$k] -Force; Write-Host ("{0} set to {1}" -f $k, $tcpKeys[$k]) -ForegroundColor Green } Catch { Write-Host ("Error setting {0}" -ForegroundColor Red } }
-    Write-Host "Network tweaks applied!" -ForegroundColor Cyan
     Pause
 }
 
@@ -272,17 +203,12 @@ function Auto-Boost {
     Network-Tweaks
     Ultimate-Performance
     Windows-Debloat
-    Optimize-Startup
-    Disk-Optimization
-    Security-Privacy
-    Network-Booster
-    Backup
     Write-Host "`nAUTO BOOST COMPLETED!" -ForegroundColor Green
     Pause
 }
 
 # ==========================
-# MAIN LOOP
+# LOOP
 # ==========================
 do {
     Show-Menu
@@ -294,12 +220,7 @@ do {
         "4" { Network-Tweaks }
         "5" { Ultimate-Performance }
         "6" { Windows-Debloat }
-        "7" { Backup }
         "8" { Auto-Boost }
-        "9" { Optimize-Startup }
-        "10" { Disk-Optimization }
-        "11" { Security-Privacy }
-        "12" { Network-Booster }
         "0" { exit }
     }
 } while ($true)
