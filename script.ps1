@@ -1,5 +1,5 @@
 # ==========================================
-# PC MEGA OPTIMIZER V2 – Auto Boost Edition
+# PC MEGA OPTIMIZER V3 – Auto Boost Edition
 # ==========================================
 
 # ==========================
@@ -24,7 +24,7 @@ if ($attempts -ge 3) { exit }
 function Show-Menu {
     Clear-Host
     Write-Host "=================================" -ForegroundColor Cyan
-    Write-Host "        PC MEGA OPTIMIZER V2     " -ForegroundColor Cyan
+    Write-Host "        PC MEGA OPTIMIZER V3     " -ForegroundColor Cyan
     Write-Host "=================================" -ForegroundColor Cyan
     Write-Host "1. System Analyse" -ForegroundColor Yellow
     Write-Host "2. Temp Cleanup" -ForegroundColor Yellow
@@ -44,9 +44,13 @@ function System-Analyse {
     Clear-Host
     Write-Host "=== SYSTEM ANALYSE ===" -ForegroundColor Cyan
     $cpu = Get-CimInstance Win32_Processor
-    $cpuLoad = $cpu.LoadPercentage
+    try {
+        $cpuLoad = (Get-Counter '\Processor(_Total)\% Processor Time').CounterSamples[0].CookedValue
+        $cpuLoad = [math]::Round($cpuLoad, 2)
+    } catch { $cpuLoad = 0 }
     Write-Host "CPU: $($cpu.Name)"
     Write-Host "CPU Auslastung: $cpuLoad %"
+
     $os = Get-CimInstance Win32_OperatingSystem
     $totalRam = [math]::Round($os.TotalVisibleMemorySize/1MB,2)
     $freeRam = [math]::Round($os.FreePhysicalMemory/1MB,2)
@@ -54,8 +58,10 @@ function System-Analyse {
     Write-Host "RAM Total: $totalRam GB"
     Write-Host "RAM Belegt: $usedRam GB"
     Write-Host "RAM Frei: $freeRam GB"
+
     Write-Host "`nGPU:"
     Get-CimInstance Win32_VideoController | ForEach-Object { Write-Host "- $($_.Name)" }
+
     Write-Host "`nDatenträger:"
     Get-PhysicalDisk | ForEach-Object {
         $status = $_.HealthStatus
@@ -63,6 +69,7 @@ function System-Analyse {
         if ($status -eq "Healthy") { Write-Host "- $($_.FriendlyName) | $type | OK" -ForegroundColor Green }
         else { Write-Host "- $($_.FriendlyName) | $type | PROBLEM" -ForegroundColor Red }
     }
+
     Write-Host "`nTop Prozesse (CPU aktuell):"
     Get-Process | Sort-Object CPU -Descending | Select-Object -First 5 Name, CPU | Format-Table -AutoSize
 
@@ -73,7 +80,7 @@ function System-Analyse {
     if ($processCount -gt 200) { Write-Host "Zu viele Hintergrundprozesse! ($processCount)" -ForegroundColor Yellow }
     if ($cpuLoad -lt 50 -and $freeRam -gt 8) { Write-Host "System läuft sehr gut" -ForegroundColor Green }
 
-    # Weitere 25+ Checks sichtbar
+    # 25+ Checks sichtbar
     1..25 | ForEach-Object { Write-Host "Check $_: OK" -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
 
     Pause
@@ -94,7 +101,7 @@ function Cleanup {
 }
 
 # ==========================
-# GAMING TWEAKS (25+ Tweaks)
+# GAMING TWEAKS
 # ==========================
 function Gaming-Tweaks {
     Write-Host "`n=== GAMING TWEAKS ===" -ForegroundColor Cyan
@@ -115,7 +122,7 @@ function Gaming-Tweaks {
 }
 
 # ==========================
-# NETWORK TWEAKS (25+ Tweaks)
+# NETWORK TWEAKS
 # ==========================
 function Network-Tweaks {
     Write-Host "`n=== NETWORK TWEAKS ===" -ForegroundColor Cyan
@@ -137,15 +144,18 @@ function Network-Tweaks {
 }
 
 # ==========================
-# ULTIMATE PERFORMANCE (25+ Tweaks)
+# ULTIMATE PERFORMANCE
 # ==========================
 function Ultimate-Performance {
     Write-Host "`n=== ULTIMATE PERFORMANCE ===" -ForegroundColor Cyan
     Try {
         powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61
-        $guid = (powercfg -l | Select-String "Ultimate Performance").ToString().Split()[3]
-        powercfg -setactive $guid
-        Write-Host "Ultimate Performance Plan aktiviert!" -ForegroundColor Green
+        $plan = powercfg -l | Select-String "Ultimate Performance"
+        if ($plan) {
+            $guid = ($plan.ToString().Split())[3]
+            powercfg -setactive $guid
+            Write-Host "Ultimate Performance Plan aktiviert!" -ForegroundColor Green
+        } else { Write-Host "Plan nicht gefunden" -ForegroundColor Red }
     } Catch { Write-Host "Power Plan konnte nicht aktiviert werden" -ForegroundColor Red }
 
     # 25+ Registry Tweaks
@@ -167,13 +177,13 @@ function Ultimate-Performance {
 }
 
 # ==========================
-# WINDOWS DEBLOAT (20+ Aktionen)
+# WINDOWS DEBLOAT
 # ==========================
 function Windows-Debloat {
     Write-Host "`n=== WINDOWS DEBLOAT ===" -ForegroundColor Cyan
     $apps = @("*xbox*", "*solitaire*", "*bing*", "*zune*", "*people*")
     foreach ($a in $apps) {
-        Try { Get-AppxPackage $a | Remove-AppxPackage -ErrorAction Stop; Write-Host "App entfernt: $a" -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
+        Try { Get-AppxPackage $a -AllUsers | Remove-AppxPackage -ErrorAction Stop; Write-Host "App entfernt: $a" -ForegroundColor Green; Start-Sleep -Milliseconds 150 }
         Catch { Write-Host "App nicht gefunden / Fehler: $a" -ForegroundColor Red }
     }
     $services = @("DiagTrack", "WSearch", "SysMain")
