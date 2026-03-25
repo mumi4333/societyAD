@@ -22,7 +22,7 @@ if (-Not (Test-Path "$driveLetter`:\")) {
     exit
 }
 
-Write-Host "You selected drive ${driveLetter}:\\" -ForegroundColor Cyan
+Write-Host "You selected drive ${driveLetter}:" -ForegroundColor Cyan
 
 # Step 4: Download Rufus if not present
 $rufusPath = "$PSScriptRoot\Rufus.exe"
@@ -40,7 +40,7 @@ if (-Not (Test-Path $rufusPath)) {
 }
 
 # Step 5: Confirm before proceeding
-$confirm = Read-Host "The script will run Rufus to make drive ${driveLetter}:\ bootable. Continue? (y/n)"
+$confirm = Read-Host "The script will run Rufus to make drive ${driveLetter}: bootable. Continue? (y/n)"
 if ($confirm -ne "y") {
     Write-Host "Aborted." -ForegroundColor Red
     Pause
