@@ -40,14 +40,23 @@ if (-not (Test-Path $rufusPath)) {
     $rufusUrl = "https://github.com/pbatard/rufus/releases/latest/download/Rufus-x64.exe"
 
     try {
-        $wc = New-Object System.Net.WebClient
-        $wc.DownloadFile($rufusUrl, $rufusPath)
+        Invoke-WebRequest -Uri $rufusUrl -OutFile $rufusPath -UseBasicParsing
         Write-Host "Download completed." -ForegroundColor Green
     }
     catch {
-        Write-Host "Download failed. Check internet connection." -ForegroundColor Red
-        Pause
-        return
+        Write-Host "Download failed. Trying alternative method..." -ForegroundColor Yellow
+
+        try {
+            $wc = New-Object System.Net.WebClient
+            $wc.Headers.Add("user-agent", "Mozilla/5.0")
+            $wc.DownloadFile($rufusUrl, $rufusPath)
+            Write-Host "Download completed (fallback)." -ForegroundColor Green
+        }
+        catch {
+            Write-Host "Download completely failed. Check firewall or network restrictions." -ForegroundColor Red
+            Pause
+            return
+        }
     }
 }
 
