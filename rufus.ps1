@@ -1,52 +1,58 @@
 # ===============================
-# USB Bootable Maker with automatic Rufus download
+# USB Bootable Maker - Select Drive by Letter (Enhanced)
 # ===============================
 
-# Funktion: USB-Laufwerke auflisten
-function Get-USBDrives {
-    Get-WmiObject Win32_DiskDrive | Where-Object { $_.InterfaceType -eq "USB" }
+# Function: Pause script for user
+function Pause {
+    Write-Host "Press Enter to continue..."
+    Read-Host
 }
 
-# Schritt 1: USB einstecken Hinweis
-Write-Host "Bitte USB-Stick einstecken. Wenn bereits eingesteckt, kurz aus- und wieder einstecken." -ForegroundColor Yellow
-Read-Host "Drücke Enter, wenn bereit"
+# Step 1: List all drives
+Write-Host "Detected drives:" -ForegroundColor Green
+Get-PSDrive -PSProvider 'FileSystem' | ForEach-Object { Write-Host "$($_.Name):  $($_.Root)" }
 
-# Schritt 2: Liste der USB-Laufwerke anzeigen
-$usbDrives = Get-USBDrives
-if ($usbDrives.Count -eq 0) {
-    Write-Host "Kein USB-Stick erkannt. Script wird beendet." -ForegroundColor Red
+# Step 2: Ask user to enter drive letter
+$driveLetter = Read-Host "Enter the drive letter of the USB stick (e.g., E)"
+
+# Step 3: Validate drive exists
+if (-Not (Test-Path "$driveLetter`:\")) {
+    Write-Host "Drive $driveLetter not found!" -ForegroundColor Red
+    Pause
     exit
 }
 
-Write-Host "Gefundene USB-Laufwerke:" -ForegroundColor Green
-$counter = 1
-foreach ($drive in $usbDrives) {
-    Write-Host "$counter. $($drive.Model) - $($drive.DeviceID)"
-    $counter++
-}
+Write-Host "You selected drive $driveLetter:`\" -ForegroundColor Cyan
 
-# Schritt 3: Laufwerk auswählen
-$selection = Read-Host "Wähle die Nummer des USB-Sticks aus"
-$selectedDrive = $usbDrives[$selection - 1]
-
-Write-Host "Du hast folgendes Laufwerk ausgewählt: $($selectedDrive.Model) - $($selectedDrive.DeviceID)" -ForegroundColor Cyan
-
-# Schritt 4: Rufus herunterladen, falls nicht vorhanden
+# Step 4: Download Rufus if not present
 $rufusPath = "$PSScriptRoot\Rufus.exe"
 if (-Not (Test-Path $rufusPath)) {
-    Write-Host "Rufus.exe wird heruntergeladen..." -ForegroundColor Yellow
+    Write-Host "Rufus not found. Downloading..." -ForegroundColor Yellow
     $rufusUrl = "https://github.com/pbatard/rufus/releases/latest/download/Rufus-x64.exe"
-    Invoke-WebRequest -Uri $rufusUrl -OutFile $rufusPath
-    Write-Host "Rufus wurde heruntergeladen." -ForegroundColor Green
+    try {
+        Invoke-WebRequest -Uri $rufusUrl -OutFile $rufusPath -ErrorAction Stop
+        Write-Host "Rufus downloaded." -ForegroundColor Green
+    } catch {
+        Write-Host "Failed to download Rufus. Check your internet connection." -ForegroundColor Red
+        Pause
+        exit
+    }
 }
 
-# Schritt 5: Bestätigung Rufus starten
-$confirm = Read-Host "Das Script kann Rufus automatisch starten und den Stick bootfähig machen. Fortfahren? (j/n)"
-if ($confirm -ne "j") {
-    Write-Host "Abgebrochen." -ForegroundColor Red
+# Step 5: Confirm before proceeding
+$confirm = Read-Host "The script will run Rufus to make drive $driveLetter:`\ bootable. Continue? (y/n)"
+if ($confirm -ne "y") {
+    Write-Host "Aborted." -ForegroundColor Red
+    Pause
     exit
 }
 
-# Schritt 6: Rufus starten mit ausgewähltem Laufwerk
-Start-Process $rufusPath -ArgumentList "/DEVICE=$($selectedDrive.DeviceID)" 
-Write-Host "Rufus wird gestartet. Bitte den Rest im Programm bestätigen." -ForegroundColor Green
+# Step 6: Start Rufus with selected drive
+try {
+    Start-Process $rufusPath -ArgumentList "/DEVICE=$driveLetter" 
+    Write-Host "Rufus is starting. Please confirm the rest in the program." -ForegroundColor Green
+} catch {
+    Write-Host "Failed to start Rufus. Check if Rufus.exe exists and try again." -ForegroundColor Red
+    Pause
+    exit
+}
