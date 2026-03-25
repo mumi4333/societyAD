@@ -1,59 +1,77 @@
 # ===============================
-# USB Bootable Maker - Select Drive by Letter (Corrected for direct iex)
+# USB Bootable Maker (Stable Version)
 # ===============================
 
-# Function: Pause script for user
+# Force TLS 1.2 (fix network issues)
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+# Function: Pause
 function Pause {
-    Write-Host "Press Enter to continue..."
+    Write-Host ""
+    Write-Host "Press Enter to continue..." -ForegroundColor DarkGray
     Read-Host
 }
 
-# Step 1: List all drives
+# Step 1: List drives
 Write-Host "Detected drives:" -ForegroundColor Green
-Get-PSDrive -PSProvider 'FileSystem' | ForEach-Object { Write-Host "$($_.Name):  $($_.Root)" }
-
-# Step 2: Ask user to enter drive letter
-$driveLetter = Read-Host "Enter the drive letter of the USB stick (e.g., E)"
-
-# Step 3: Validate drive exists
-if (-Not (Test-Path "${driveLetter}:\\")) {
-    Write-Host "Drive $driveLetter not found!" -ForegroundColor Red
-    Pause
-    exit
+Get-PSDrive -PSProvider FileSystem | ForEach-Object {
+    Write-Host "$($_.Name):  $($_.Root)"
 }
 
-# ✅ Problematische Zeile korrigiert:
+# Step 2: Ask for drive
+$driveLetter = Read-Host "Enter the drive letter (e.g., E)"
+
+# Step 3: Validate drive
+if (-not (Test-Path "${driveLetter}:\")) {
+    Write-Host "Drive ${driveLetter}: not found!" -ForegroundColor Red
+    Pause
+    return
+}
+
 Write-Host "You selected drive ${driveLetter}:" -ForegroundColor Cyan
 
-# Step 4: Download Rufus if not present
-$rufusPath = "$PSScriptRoot\Rufus.exe"
-if (-Not (Test-Path $rufusPath)) {
-    Write-Host "Rufus not found. Downloading..." -ForegroundColor Yellow
+# Step 4: Rufus path (TEMP instead of local folder)
+$rufusPath = "$env:TEMP\Rufus.exe"
+
+# Step 5: Download Rufus if needed
+if (-not (Test-Path $rufusPath)) {
+    Write-Host "Downloading Rufus..." -ForegroundColor Yellow
+
     $rufusUrl = "https://github.com/pbatard/rufus/releases/latest/download/Rufus-x64.exe"
+
     try {
-        Invoke-WebRequest -Uri $rufusUrl -OutFile $rufusPath -ErrorAction Stop
-        Write-Host "Rufus downloaded." -ForegroundColor Green
-    } catch {
-        Write-Host "Failed to download Rufus. Check your internet connection." -ForegroundColor Red
+        $wc = New-Object System.Net.WebClient
+        $wc.DownloadFile($rufusUrl, $rufusPath)
+        Write-Host "Download completed." -ForegroundColor Green
+    }
+    catch {
+        Write-Host "Download failed. Check internet connection." -ForegroundColor Red
         Pause
-        exit
+        return
     }
 }
 
-# ✅ Problematische Zeile korrigiert:
+# Step 6: Confirmation
 $confirm = Read-Host "The script will run Rufus to make drive ${driveLetter}: bootable. Continue? (y/n)"
+
 if ($confirm -ne "y") {
-    Write-Host "Aborted." -ForegroundColor Red
+    Write-Host "Aborted by user." -ForegroundColor Red
     Pause
-    exit
+    return
 }
 
-# Step 6: Start Rufus with selected drive
+# Step 7: Start Rufus
 try {
-    Start-Process $rufusPath -ArgumentList "/DEVICE=${driveLetter}" 
-    Write-Host "Rufus is starting. Please confirm the rest in the program." -ForegroundColor Green
-} catch {
-    Write-Host "Failed to start Rufus. Check if Rufus.exe exists and try again." -ForegroundColor Red
-    Pause
-    exit
+    Start-Process $rufusPath -ArgumentList "/DEVICE=${driveLetter}"
+    Write-Host "Rufus started successfully." -ForegroundColor Green
 }
+catch {
+    Write-Host "Failed to start Rufus." -ForegroundColor Red
+    Pause
+    return
+}
+
+# Step 8: End (manual close only)
+Write-Host ""
+Write-Host "Script finished. You can close this window manually." -ForegroundColor DarkGray
+Pause
